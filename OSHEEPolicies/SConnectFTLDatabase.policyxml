@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policies>
+  <policy policyType="JDBCProviders" policyName="SConnectFTLDatabase" policyTemplate="DB2_91_Windows">
+    <databaseName>FTL</databaseName>
+    <databaseType>PostgreSQL</databaseType>
+    <databaseVersion></databaseVersion>
+    <type4DriverClassName>org.postgresql.Driver</type4DriverClassName>
+    <type4DatasourceClassName>org.postgresql.ds.PGSimpleDataSource</type4DatasourceClassName>
+    <connectionUrlFormat>jdbc:postgresql://[serverName]:[portNumber]/[databaseName]</connectionUrlFormat>
+    <connectionUrlFormatAttr1></connectionUrlFormatAttr1>
+    <connectionUrlFormatAttr2></connectionUrlFormatAttr2>
+    <connectionUrlFormatAttr3></connectionUrlFormatAttr3>
+    <connectionUrlFormatAttr4></connectionUrlFormatAttr4>
+    <connectionUrlFormatAttr5></connectionUrlFormatAttr5>
+    <serverName>localhost</serverName>
+    <portNumber>5433</portNumber>
+    <jarsURL>{SharedClassesDirectory}</jarsURL>
+    <databaseSchemaNames>useProvidedSchemaNames</databaseSchemaNames>
+    <description></description>
+    <maxConnectionPoolSize>0</maxConnectionPoolSize>
+    <securityIdentity>sconnectSecurityIdentity</securityIdentity>
+    <environmentParms></environmentParms>
+    <jdbcProviderXASupport>false</jdbcProviderXASupport>
+    <useDeployedJars>true</useDeployedJars>
+  </policy>
+</policies>

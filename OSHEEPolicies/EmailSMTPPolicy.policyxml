@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policies>
+  <policy policyType="SMTP" policyName="EmailSMTPPolicy" policyTemplate="SMTP">
+    <smtpServer>bgd-mgmt.ibis-instruments.com</smtpServer>
+    <securityIdentity></securityIdentity>
+    <starttlsEnable>false</starttlsEnable>
+    <starttlsRequired>false</starttlsRequired>
+  </policy>
+</policies>

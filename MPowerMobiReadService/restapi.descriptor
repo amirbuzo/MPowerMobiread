@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:restapiDescriptor xmlns="http://com.ibm.etools.mft.descriptor.base" xmlns:ns2="http://com.ibm.etools.mft.descriptor.restapi" definitionType="openapi_3" definitionFile="Mobiread UC2 - ACE corrected.yml" implementation="gen/MPowerMobiReadService.msgflow" https="false" definitionWithExtRef="false" faultFormat="JSON">
+    <ns2:operations>
+        <ns2:operation name="cabinsWithoutZoneOrLine" implementation="cabinsWithoutZoneOrLine.subflow"/>
+        <ns2:operation name="consumerWithoutCabins" implementation="consumerWithoutCabins.subflow"/>
+        <ns2:operation name="getCabins" implementation="getCabins.subflow"/>
+        <ns2:operation name="getConsumersWithoutReading" implementation="getConsumersWithoutReading.subflow"/>
+        <ns2:operation name="getConvergeCabins" implementation="getConvergeCabins.subflow"/>
+        <ns2:operation name="getConvergeCustomers" implementation="getConvergeCustomers.subflow"/>
+        <ns2:operation name="getConvergeFeeders" implementation="getConvergeFeeders.subflow"/>
+        <ns2:operation name="getCustomers" implementation="getCustomers.subflow"/>
+        <ns2:operation name="getEmptyContract" implementation="getEmptyContract.subflow"/>
+        <ns2:operation name="getFeedHecNenstCabins" implementation="getFeedHecNenstCabins.subflow"/>
+        <ns2:operation name="getFeedHecNenstCustomers" implementation="getFeedHecNenstCustomers.subflow"/>
+        <ns2:operation name="getFeedHecNenstFeeders" implementation="getFeedHecNenstFeeders.subflow"/>
+        <ns2:operation name="getFeedHecNenstItemReadings" implementation="getFeedHecNenstItemReadings.subflow"/>
+        <ns2:operation name="getFeeders" implementation="getFeeders.subflow"/>
+        <ns2:operation name="getItemReadings" implementation="getItemReadings.subflow"/>
+        <ns2:operation name="getMinIDFeedHecNenstItemReadings" implementation="getMinIDFeedHecNenstItemReadings.subflow"/>
+        <ns2:operation name="getMinIDItemReadings" implementation="getMinIDItemReadings.subflow"/>
+        <ns2:operation name="getMinIDSpecialItemReadings" implementation="getMinIDSpecialItemReadings.subflow"/>
+        <ns2:operation name="getSpecialCabins" implementation="getSpecialCabins.subflow"/>
+        <ns2:operation name="getSpecialCustomers" implementation="getSpecialCustomers.subflow"/>
+        <ns2:operation name="getSpecialFeeders" implementation="getSpecialFeeders.subflow"/>
+        <ns2:operation name="getSpecialItemReadings" implementation="getSpecialItemReadings.subflow"/>
+        <ns2:operation name="getSubZones" implementation="getSubZones.subflow"/>
+        <ns2:operation name="getTotalConvergeCustomers" implementation="getTotalConvergeCustomers.subflow"/>
+        <ns2:operation name="getTotalConvergeItemReadings" implementation="getTotalConvergeItemReadings.subflow"/>
+        <ns2:operation name="getTotalCustomers" implementation="getTotalCustomers.subflow"/>
+        <ns2:operation name="getTotalFeedHecNenstCustomers" implementation="getTotalFeedHecNenstCustomers.subflow"/>
+        <ns2:operation name="getTotalFeedHecNenstItemReadings" implementation="getTotalFeedHecNenstItemReadings.subflow"/>
+        <ns2:operation name="getTotalItemReadings" implementation="getTotalItemReadings.subflow"/>
+        <ns2:operation name="getTotalSpecialCustomers" implementation="getTotalSpecialCustomers.subflow"/>
+        <ns2:operation name="getTotalSpecialItemReadings" implementation="getTotalSpecialItemReadings.subflow"/>
+        <ns2:operation name="getWrongRead" implementation="getWrongRead.subflow"/>
+        <ns2:operation name="getZones" implementation="getZones.subflow"/>
+        <ns2:operation name="isConsumerWithoutCabins" implementation="isConsumerWithoutCabins.subflow"/>
+        <ns2:operation name="readingWithoutConsumers" implementation="readingWithoutConsumers.subflow"/>
+        <ns2:operation name="truncateAnomalies" implementation="truncateAnomalies.subflow"/>
+        <ns2:operation name="truncateSubAnomalies" implementation="truncateSubAnomalies.subflow"/>
+        <ns2:operation name="validCabins" implementation="validCabins.subflow"/>
+        <ns2:operation name="validConsumer" implementation="validConsumer.subflow"/>
+        <ns2:operation name="validFeeders" implementation="validFeeders.subflow"/>
+        <ns2:operation name="validReadings" implementation="validReadings.subflow"/>
+    </ns2:operations>
+    <ns2:errorHandlers/>
+</ns2:restapiDescriptor>

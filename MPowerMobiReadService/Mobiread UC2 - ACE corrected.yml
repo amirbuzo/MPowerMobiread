@@ -1,0 +1,1741 @@
+openapi: 3.0.3
+info:
+  title: MOBIREAD Integration API
+  version: 1.0.0-draft
+  description: 'REST API skeleton contract derived from the supplied **MOBIREAD Technical Analysis**. It retains all
+    documented operations that are not marked red in the source document.
+
+
+    **Design rules**
+
+    - SQL table names, column names and SQL fragments are never accepted from callers. Logical enums are mapped server-side.
+
+    - SQL parameters must be bound variables; ID lists are JSON arrays, not comma-separated SQL text.
+
+    - GET operations return the columns projected by the documented SELECT, normalized to camelCase JSON.
+
+    - INSERT/UPDATE operations accept JSON derived from the documented SQL inputs and return service-level mutation counts.
+
+    - Operations marked red in the source document are excluded: queries 9, 18, 21, 22, 26, 28, 37a, 37b and 37c.
+    Non-red operations remain in scope regardless of analysis notes; queries 25 and 27 execute the documented TRUNCATE statements.
+
+    - Database datatypes, nullability, lengths, authentication, authorization and transaction boundaries were not provided;
+    field types below are conservative API-level inferences and must be verified against Oracle metadata before implementation.'
+servers:
+- url: /api/v1/mobiread
+  description: Relative base path; host is environment-specific
+tags:
+- name: Consumers
+  description: Consumer synchronization reads and acknowledgement status.
+- name: Readings
+  description: Meter-reading synchronization, pending IDs and reading submission.
+- name: Zones
+  description: Zone and sub-zone reference data.
+- name: Anomalies
+  description: Anomaly reference synchronization. Destructive refresh operations require additional design review.
+- name: Feeders
+  description: Feeder/node synchronization.
+- name: Cabins
+  description: Cabin/node synchronization and cabin status updates.
+- name: Utilities
+  description: Pre-import validation/count checks.
+paths:
+  /consumers/fatura/count:
+    get:
+      tags:
+      - Consumers
+      summary: Count pending Fatura consumers
+      operationId: getTotalCustomers
+      description: Query 1. Counts rows in `MR.MODOWNHEADER_FATURA_NEW` where `ZZIMP = 0`.
+      x-source-query: '1'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/converge/count:
+    get:
+      tags:
+      - Consumers
+      summary: Count pending Converge consumers
+      operationId: getTotalConvergeCustomers
+      description: Query 2. Counts rows in `MR.MODOWNHEADER_CONVERGE_NEW` where `ZZIMP = 0`.
+      x-source-query: '2'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/feed-hec-nenst/count:
+    get:
+      tags:
+      - Consumers
+      summary: Count pending Feed/HEC/Nenst consumers
+      operationId: getTotalFeedHecNenstCustomers
+      description: Query 3. Counts rows in `MR.MODOWNHEADER_F_H_N_NEW` where `ZZIMP = 0`.
+      x-source-query: '3'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/special/count:
+    get:
+      tags:
+      - Consumers
+      summary: Count pending Special/Fideri16 consumers
+      operationId: getTotalSpecialCustomers
+      description: Query 4. Executes the documented SQL `SELECT count(h.MODOWNHEADER_ID) AS TOTAL FROM
+        MR.MODOWNHEADER_F_H_N_NEW H WHERE h.zzimp = 0;`. The source table is retained exactly as documented.
+      x-source-query: '4'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/fatura:
+    get:
+      tags:
+      - Consumers
+      summary: Get pending Fatura consumers
+      operationId: getCustomers
+      description: Query 5. Returns consumers pending synchronization (`ZZIMP = 0`) from `MR.MODOWNHEADER_FATURA_NEW`, ordered
+        by `CODE_CONTRACT, TIPI_LEXIMIT`.
+      x-source-query: '5'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/converge:
+    get:
+      tags:
+      - Consumers
+      summary: Get pending Converge consumers
+      operationId: getConvergeCustomers
+      description: Query 6. Returns consumers pending synchronization (`ZZIMP = 0`) from `MR.MODOWNHEADER_CONVERGE_NEW`, ordered
+        by `MODOWNHEADER_ID`.
+      x-source-query: '6'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/feed-hec-nenst:
+    get:
+      tags:
+      - Consumers
+      summary: Get pending Feed/HEC/Nenst consumers
+      operationId: getFeedHecNenstCustomers
+      description: Query 7. Returns consumers pending synchronization (`ZZIMP = 0`) from `MR.MODOWNHEADER_F_H_N_NEW`, ordered
+        by `CODE_CONTRACT`.
+      x-source-query: '7'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /consumers/special:
+    get:
+      tags:
+      - Consumers
+      summary: Get pending Special/Fideri16 consumers
+      operationId: getSpecialCustomers
+      description: Query 8. Returns consumers pending synchronization (`ZZIMP = 0`) from `MR.MODOWNHEADER_FIDERI16_NEW`, ordered
+        by `MODOWNHEADER_ID`.
+      x-source-query: '8'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/fatura/count:
+    get:
+      tags:
+      - Readings
+      summary: Count pending Fatura readings
+      operationId: getTotalItemReadings
+      description: Query 10. Counts rows in `MR.MODOWNHEADER_FATURA_NEW` where `ZZIMP = 1 AND ZZIMP1 = 0`.
+      x-source-query: '10'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/converge/count:
+    get:
+      tags:
+      - Readings
+      summary: Count pending Converge readings
+      operationId: getTotalConvergeItemReadings
+      description: Query 11. Counts rows in `MR.MODOWNHEADER_CONVERGE_NEW` where `ZZIMP = 1 AND ZZIMP1 = 0`.
+      x-source-query: '11'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/feed-hec-nenst/count:
+    get:
+      tags:
+      - Readings
+      summary: Count pending Feed/HEC/Nenst readings
+      operationId: getTotalFeedHecNenstItemReadings
+      description: Query 12. Counts rows in `MR.MODOWNHEADER_F_H_N_NEW` where `ZZIMP = 1 AND ZZIMP1 = 0`.
+      x-source-query: '12'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/special/count:
+    get:
+      tags:
+      - Readings
+      summary: Count pending Special/Fideri16 readings
+      operationId: getTotalSpecialItemReadings
+      description: Query 13. Counts rows in `MR.MODOWNHEADER_FIDERI16_NEW` where `ZZIMP = 1 AND ZZIMP1 = 0`.
+      x-source-query: '13'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/fatura/min-pending-item-id:
+    get:
+      tags:
+      - Readings
+      summary: Get minimum unprocessed Fatura item ID
+      operationId: getMinIDItemReadings
+      description: Query 14. Selects the first `MODOWNITEM_ID` where `ZZIMP = 0` from `MODOWNITEM_FATURA`. **Verification
+        required:** these three queries omit the schema prefix in the supplied document; the intended Oracle schema/default
+        schema must be confirmed.
+      x-source-query: '14'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MinPendingItemIdResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/feed-hec-nenst/min-pending-item-id:
+    get:
+      tags:
+      - Readings
+      summary: Get minimum unprocessed Feed/HEC/Nenst item ID
+      operationId: getMinIDFeedHecNenstItemReadings
+      description: Query 15. Selects the first `MODOWNITEM_ID` where `ZZIMP = 0` from `MODOWNITEM_F_H_N_FATURA`. **Verification
+        required:** these three queries omit the schema prefix in the supplied document; the intended Oracle schema/default
+        schema must be confirmed.
+      x-source-query: '15'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MinPendingItemIdResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/special/min-pending-item-id:
+    get:
+      tags:
+      - Readings
+      summary: Get minimum unprocessed Special item ID
+      operationId: getMinIDSpecialItemReadings
+      description: Query 16. Selects the first `MODOWNITEM_ID` where `ZZIMP = 0` from `MODOWNITEM_FIDERI16`. **Verification
+        required:** these three queries omit the schema prefix in the supplied document; the intended Oracle schema/default
+        schema must be confirmed.
+      x-source-query: '16'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MinPendingItemIdResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/fatura:
+    get:
+      tags:
+      - Readings
+      summary: Get pending Fatura readings
+      operationId: getItemReadings
+      description: Query 17. Returns readings pending synchronization from `MR.MODOWNHEADER_FATURA_NEW` where `ZZIMP = 1 AND
+        ZZIMP1 = 0`. This projection additionally includes the SPROD fields.
+      x-source-query: '17'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadingPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/feed-hec-nenst:
+    get:
+      tags:
+      - Readings
+      summary: Get pending Feed/HEC/Nenst readings
+      operationId: getFeedHecNenstItemReadings
+      description: 'Query 19. Returns readings pending synchronization from `MR.MODOWNHEADER_F_H_N_NEW` where `ZZIMP = 1 AND
+        ZZIMP1 = 0`. '
+      x-source-query: '19'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadingPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /readings/special:
+    get:
+      tags:
+      - Readings
+      summary: Get pending Special/Fideri16 readings
+      operationId: getSpecialItemReadings
+      description: 'Query 20. Returns readings pending synchronization from `MR.MODOWNHEADER_FIDERI16_NEW` where `ZZIMP =
+        1 AND ZZIMP1 = 0`. '
+      x-source-query: '20'
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadingPage'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /zones:
+    get:
+      tags:
+      - Zones
+      summary: Get zones
+      operationId: getZones
+      description: Query 23. Returns grouped zones from `MYAVIS_ZONA` joined to `LOVZONA`; the returned description appends
+        ` Zone`.
+      x-source-query: '23'
+      responses:
+        '200':
+          description: Zones.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /zones/subzones:
+    get:
+      tags:
+      - Zones
+      summary: Get sub-zones
+      operationId: getSubZones
+      description: Query 24. Returns grouped zone/sub-zone mappings from `MYAVIS_ZONA` joined to `LOVZONA`.
+      x-source-query: '24'
+      responses:
+        '200':
+          description: Sub-zones.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubZone'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /anomalies:
+    delete:
+      tags:
+      - Anomalies
+      summary: Clear primary anomaly reference table
+      operationId: truncateAnomalies
+      description: Query 25. Executes the documented SQL `TRUNCATE TABLE OSSH.MYAVIS_ANOMAL;`. This is destructive
+        and non-row-scoped; restrict to an internal synchronization role and coordinate it with the replacement load.
+      x-source-query: '25'
+      responses:
+        '204':
+          description: Primary anomaly table cleared.
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /anomalies/subanomalies:
+    delete:
+      tags:
+      - Anomalies
+      summary: Clear anomaly/sub-anomaly relation table
+      operationId: truncateSubAnomalies
+      description: Query 27. Executes the documented SQL `TRUNCATE TABLE OSSH.LISTE_ANOMALI_SUBANOMALI;`. This is destructive
+        and should be restricted to an internal synchronization role.
+      x-source-query: '27'
+      responses:
+        '204':
+          description: Relation table cleared.
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /feeders/fatura:
+    get:
+      tags:
+      - Feeders
+      summary: Get Fatura feeders
+      operationId: getFeeders
+      description: Query 29. Type 1. Source filter is `validity = 1 AND type = 1`; unlike types 2-4, the documented query
+        does not filter `ZZIMP = 0`.
+      x-source-query: '29'
+      responses:
+        '200':
+          description: Feeders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feeder'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /feeders/converge:
+    get:
+      tags:
+      - Feeders
+      summary: Get Converge feeders
+      operationId: getConvergeFeeders
+      description: Query 30. Type 2. Filters `ZZIMP = 0`, `validity = 1`, `type = 2`.
+      x-source-query: '30'
+      responses:
+        '200':
+          description: Feeders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feeder'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /feeders/feed-hec-nenst:
+    get:
+      tags:
+      - Feeders
+      summary: Get Feed/HEC/Nenst feeders
+      operationId: getFeedHecNenstFeeders
+      description: Query 31. Type 3. Filters `ZZIMP = 0`, `validity = 1`, `type = 3`.
+      x-source-query: '31'
+      responses:
+        '200':
+          description: Feeders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feeder'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /feeders/special:
+    get:
+      tags:
+      - Feeders
+      summary: Get Special feeders
+      operationId: getSpecialFeeders
+      description: Query 32. Type 4. Filters `ZZIMP = 0`, `validity = 1`, `type = 4`.
+      x-source-query: '32'
+      responses:
+        '200':
+          description: Feeders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Feeder'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /cabins/fatura:
+    get:
+      tags:
+      - Cabins
+      summary: Get Fatura cabins
+      operationId: getCabins
+      description: Query 33. Type 1. Requires valid cabin and valid type-1 feeder; no ZZIMP filter is shown.
+      x-source-query: '33'
+      responses:
+        '200':
+          description: Cabins.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cabin'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /cabins/converge:
+    get:
+      tags:
+      - Cabins
+      summary: Get Converge cabins
+      operationId: getConvergeCabins
+      description: Query 34. Type 2. Requires cabin `ZZIMP=0` and feeder `ZZIMP=1`.
+      x-source-query: '34'
+      responses:
+        '200':
+          description: Cabins.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cabin'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /cabins/feed-hec-nenst:
+    get:
+      tags:
+      - Cabins
+      summary: Get Feed/HEC/Nenst cabins
+      operationId: getFeedHecNenstCabins
+      description: Query 35. Type 3. Requires both cabin and feeder `ZZIMP=0` in the documented SQL.
+      x-source-query: '35'
+      responses:
+        '200':
+          description: Cabins.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cabin'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /cabins/special:
+    get:
+      tags:
+      - Cabins
+      summary: Get Special cabins
+      operationId: getSpecialCabins
+      description: Query 36. Type 4. Uses actual `LOVCABIN_ID`; requires cabin `ZZIMP=0` and feeder `ZZIMP=1`.
+      x-source-query: '36'
+      responses:
+        '200':
+          description: Cabins.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cabin'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/valid-feeders:
+    get:
+      tags:
+      - Utilities
+      summary: Count valid feeders
+      operationId: validFeeders
+      description: Query 38. Counts valid feeder rows for the logical type (`LOVLINE_FATURA` joined to `LOVINSTANCES`).
+      x-source-query: '38'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/valid-cabins:
+    get:
+      tags:
+      - Utilities
+      summary: Count valid cabins
+      operationId: validCabins
+      description: Query 39. Counts distinct valid cabins with matching valid feeder and zone mapping for the logical type.
+      x-source-query: '39'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/pending-consumers:
+    get:
+      tags:
+      - Utilities
+      summary: Count pending consumers
+      operationId: validConsumer
+      description: Query 40. Counts distinct `MODOWNHEADER_ID` rows where `ZZIMP = 0`. Server maps the logical type to the
+        allowed table. Raw `tableName` is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '40'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/pending-readings:
+    get:
+      tags:
+      - Utilities
+      summary: Count pending readings
+      operationId: validReadings
+      description: Query 41. Counts distinct `MODOWNHEADER_ID` rows where `ZZIMP1 = 0`. Server maps the logical type to the
+        allowed table. Raw `tableName` is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '41'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/cabins-without-zone-or-line:
+    get:
+      tags:
+      - Utilities
+      summary: Count cabins without zone or line
+      operationId: cabinsWithoutZoneOrLine
+      description: Query 42. Counts unsynchronized valid cabins where town, mapped sub-zone, or line reference is missing.
+        Raw `tableName` is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '42'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/consumers-without-cabins:
+    get:
+      tags:
+      - Utilities
+      summary: Count consumers without valid cabins
+      operationId: isConsumerWithoutCabins
+      description: Query 43. Counts rows with `ZZIMP = 0 AND ZZIMP1 = 0` whose derived cabin reference is not in the valid
+        cabin set. Raw `tableName` is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '43'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/readings-without-consumers:
+    get:
+      tags:
+      - Utilities
+      summary: Count readings without consumer synchronization
+      operationId: readingWithoutConsumers
+      description: Query 44. Counts rows with `ZZIMP1 = 0 AND ZZIMP != 0` as documented. Raw `tableName` is intentionally
+        not exposed; use the logical `{type}` mapping.
+      x-source-query: '44'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/cabins-without-consumers:
+    get:
+      tags:
+      - Utilities
+      summary: Count cabins without consumers
+      operationId: consumerWithoutCabins
+      description: Query 45. Counts valid unsynchronized cabins whose `NUMBERING_CABIN` is absent from the pending consumer
+        cabin references. Raw `tableName` is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '45'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/consumers-without-readings:
+    get:
+      tags:
+      - Utilities
+      summary: Count consumers without readings
+      operationId: getConsumersWithoutReading
+      description: Query 46. Counts pending consumers whose `CODE_CONTRACT` is absent from rows with `ZZIMP1 = 0`. Raw `tableName`
+        is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '46'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/wrong-previous-reading-date:
+    get:
+      tags:
+      - Utilities
+      summary: Count consumers with invalid previous reading date
+      operationId: getWrongRead
+      description: Query 47. Counts pending consumer/reading rows where `ADATSOLL < '19990101'` or later than the current
+        database date formatted `YYYYMMDD`. Raw `tableName` is intentionally not exposed; use the logical `{type}` mapping.
+      x-source-query: '47'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /utilities/{type}/empty-contract:
+    get:
+      tags:
+      - Utilities
+      summary: Count rows with empty contract code
+      operationId: getEmptyContract
+      description: Query 48. Counts pending rows where `CODE_CONTRACT` is NULL or empty. Raw `tableName` is intentionally
+        not exposed; use the logical `{type}` mapping.
+      x-source-query: '48'
+      parameters:
+      - $ref: '#/components/parameters/SourceType'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+components:
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of rows to return. Current implementation default/batch size is 14000.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 14000
+        default: 14000
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: Zero-based row offset.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    SourceType:
+      name: type
+      in: path
+      required: true
+      description: 'Logical MOBIREAD data stream. Server-side mapping (never accepted as a raw table name):
+
+        - `fatura` = type 1 / `MODOWNHEADER_FATURA_NEW`
+
+        - `converge` = type 2 / `MODOWNHEADER_CONVERGE_NEW`
+
+        - `feed-hec-nenst` = type 3 / `MODOWNHEADER_F_H_N_NEW`
+
+        - `special` = type 4 / `MODOWNHEADER_FIDERI16_NEW`
+
+
+        The actual schema prefix is environment configuration (`MR_SCHEMA_NAME`; query 18 documents `TZMR_SCHEMA_NAME` specifically).'
+      schema:
+        $ref: '#/components/schemas/SourceType'
+  schemas:
+    SourceType:
+      type: string
+      enum:
+      - fatura
+      - converge
+      - feed-hec-nenst
+      - special
+      description: 'Logical MOBIREAD data stream. Server-side mapping (never accepted as a raw table name):
+
+        - `fatura` = type 1 / `MODOWNHEADER_FATURA_NEW`
+
+        - `converge` = type 2 / `MODOWNHEADER_CONVERGE_NEW`
+
+        - `feed-hec-nenst` = type 3 / `MODOWNHEADER_F_H_N_NEW`
+
+        - `special` = type 4 / `MODOWNHEADER_FIDERI16_NEW`
+
+
+        The actual schema prefix is environment configuration (`MR_SCHEMA_NAME`; query 18 documents `TZMR_SCHEMA_NAME` specifically).'
+    CountResponse:
+      type: object
+      required:
+      - count
+      properties:
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+      example:
+        count: 12
+    TotalResponse:
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+      example:
+        total: 1250
+    Pagination:
+      type: object
+      required:
+      - limit
+      - offset
+      - returned
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+        offset:
+          type: integer
+          minimum: 0
+        returned:
+          type: integer
+          minimum: 0
+      example:
+        limit: 14000
+        offset: 0
+        returned: 2
+    Customer:
+      type: object
+      properties:
+        customerFullName:
+          type: string
+          nullable: true
+          description: 'DB: NAME1_TEXT'
+        customerId:
+          type: integer
+          format: int64
+          description: 'DB: MODOWNHEADER_ID'
+        city:
+          type: string
+          nullable: true
+          description: 'DB: CITY1'
+        street:
+          type: string
+          nullable: true
+          description: 'DB: STREET'
+        apartment:
+          type: string
+          nullable: true
+          description: 'DB: HOUSE_NUM1'
+        entrance:
+          type: string
+          nullable: true
+          description: 'DB: ENTRANCE'
+        tariffType:
+          type: string
+          nullable: true
+          description: 'DB: TARIFTYP'
+        refCabin:
+          type: string
+          nullable: true
+          description: SUBSTR(ABLEINH, 3, LENGTH(ABLEINH))
+        nodeName:
+          type: string
+          nullable: true
+          description: 'DB: TERMTEXT'
+        previousReadingDate:
+          type: string
+          nullable: true
+          description: 'DB: ADATSOLL. Source does not establish an ISO datatype/format.'
+        contractCode:
+          type: string
+          nullable: true
+          description: 'DB: CODE_CONTRACT'
+        meterType:
+          type: string
+          nullable: true
+          description: 'DB: FAZE'
+        meterCode:
+          type: string
+          nullable: true
+          description: 'DB: SERGE'
+        customerRate:
+          type: number
+          nullable: true
+          description: NVL(KONSTANTA_MERIDLA,0)
+        fotomand:
+          type: number
+          nullable: true
+          description: NVL(FOTOMAND,0)
+        gpsLatitude:
+          type: string
+          nullable: true
+          description: 'DB: ZZGPS_LATITUDE; verify physical datatype.'
+        gpsLongitude:
+          type: string
+          nullable: true
+          description: 'DB: ZZGPS_LONGITUDE; verify physical datatype.'
+        category:
+          type: string
+          nullable: true
+          description: 'DB: KATEGORIA'
+        subcategory:
+          type: string
+          nullable: true
+          description: 'DB: NENKATEGORIA'
+      example: &id001
+        customerFullName: Example Customer
+        customerId: 123456
+        city: Example City
+        street: Example Street
+        apartment: '12'
+        entrance: A
+        tariffType: T1
+        refCabin: '100200'
+        nodeName: Example Node
+        previousReadingDate: '20260901'
+        contractCode: C-10001
+        meterType: 3P
+        meterCode: MTR-001
+        customerRate: 1
+        fotomand: 0
+        gpsLatitude: '41.000000'
+        gpsLongitude: '19.000000'
+        category: CATEGORY
+        subcategory: SUBCATEGORY
+    CustomerPage:
+      type: object
+      required:
+      - items
+      - pagination
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      example:
+        items:
+        - *id001
+        pagination:
+          limit: 14000
+          offset: 0
+          returned: 1
+    Reading:
+      type: object
+      properties:
+        contractCode:
+          type: string
+          nullable: true
+          description: 'DB: CODE_CONTRACT'
+        customerId:
+          type: integer
+          format: int64
+          description: 'DB: MODOWNHEADER_ID'
+        meterCode:
+          type: string
+          nullable: true
+          description: 'DB: SERGE'
+        hasIndexAktiv:
+          type: number
+          nullable: true
+        hasIndexReaktiv:
+          type: number
+          nullable: true
+        hasIndexAmbjPerbashket:
+          type: number
+          nullable: true
+        indexAktivLower:
+          type: number
+          nullable: true
+        indexAktivUpper:
+          type: number
+          nullable: true
+        indexAktivPrev:
+          type: number
+          nullable: true
+        indexReaktivLower:
+          type: number
+          nullable: true
+        indexReaktivUpper:
+          type: number
+          nullable: true
+        indexReaktivPrev:
+          type: number
+          nullable: true
+        indexAmbjPerbashketLower:
+          type: number
+          nullable: true
+        indexAmbjPerbashketUpper:
+          type: number
+          nullable: true
+        indexAmbjPerbashketPrev:
+          type: number
+          nullable: true
+        hasIndexPik:
+          type: number
+          nullable: true
+        indexPikLower:
+          type: number
+          nullable: true
+        indexPikUpper:
+          type: number
+          nullable: true
+        indexPikPrev:
+          type: number
+          nullable: true
+        itemDataEntryBillingId:
+          type: integer
+          format: int64
+          description: DB projection aliases MODOWNHEADER_ID as ID_ITEMDATAENTRY_BILLING.
+        hasIndexSprod:
+          type: number
+          nullable: true
+          description: Present in query 17 only.
+        indexSprodPrev:
+          type: number
+          nullable: true
+          description: Present in query 17 only.
+        indexSprodUpper:
+          type: number
+          nullable: true
+          description: Present in query 17 only.
+        indexSprodLower:
+          type: number
+          nullable: true
+          description: Present in query 17 only.
+        incorrectCharging:
+          type: number
+          nullable: true
+      example: &id002
+        contractCode: C-10001
+        customerId: 123456
+        meterCode: MTR-001
+        hasIndexAktiv: 1
+        hasIndexReaktiv: 1
+        hasIndexAmbjPerbashket: 0
+        indexAktivLower: 100.5
+        indexAktivUpper: 200.5
+        indexAktivPrev: 90.0
+        indexReaktivLower: 10.0
+        indexReaktivUpper: 20.0
+        indexReaktivPrev: 8.0
+        indexAmbjPerbashketLower: 0
+        indexAmbjPerbashketUpper: 0
+        indexAmbjPerbashketPrev: 0
+        hasIndexPik: 0
+        indexPikLower: 0
+        indexPikUpper: 0
+        indexPikPrev: 0
+        itemDataEntryBillingId: 123456
+        incorrectCharging: 0
+    ReadingPage:
+      type: object
+      required:
+      - items
+      - pagination
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reading'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      example:
+        items:
+        - *id002
+        pagination:
+          limit: 14000
+          offset: 0
+          returned: 1
+    MinPendingItemIdResponse:
+      type: object
+      required:
+      - minItemId
+      properties:
+        minItemId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Null when no unprocessed row exists.
+      example:
+        minItemId: 10001
+    SyncStatusRequest:
+      type: object
+      required:
+      - type
+      - target
+      - ids
+      properties:
+        type:
+          $ref: '#/components/schemas/SourceType'
+        target:
+          type: string
+          enum:
+          - consumers
+          - readings
+          description: '`consumers` maps to ZZIMP; `readings` maps to ZZIMP1. The raw column name is never supplied by the
+            caller.'
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+          description: MODOWNHEADER_ID values. Source document states processing in blocks of 1000.
+      example:
+        type: fatura
+        target: consumers
+        ids:
+        - 123456
+        - 123457
+    MutationResponse:
+      type: object
+      required:
+      - requestedCount
+      - affectedCount
+      properties:
+        requestedCount:
+          type: integer
+          minimum: 0
+        affectedCount:
+          type: integer
+          minimum: 0
+      example:
+        requestedCount: 2
+        affectedCount: 2
+    CabinStatusRequest:
+      type: object
+      required:
+      - type
+      - numberingCabin
+      - status
+      properties:
+        type:
+          $ref: '#/components/schemas/SourceType'
+        numberingCabin:
+          type: integer
+          format: int64
+          description: 'DB: NUMBERING_CABIN / API id_cabin_billing.'
+        lovcabinId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Required only for `special` (type 4). For types 1-3 the implementation must not add a LOVCABIN_ID predicate.
+        status:
+          type: integer
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+        endReadingDate:
+          type: string
+          format: date
+          nullable: true
+        closedDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: API uses ISO-8601; service maps it to the Oracle timestamp/date representation.
+      example:
+        type: special
+        numberingCabin: 100200
+        lovcabinId: 9988
+        status: 2
+        endReadingDate: '2026-09-25'
+        closedDate: '2026-09-25T10:00:00+02:00'
+    ReadingSubmission:
+      type: object
+      description: One row for MR.MOUPITEM_FATURA. Datatypes are inferred from SQL quoting and must be checked against Oracle
+        metadata.
+      properties:
+        mridnumber:
+          type: number
+          nullable: true
+          description: 'DB: MRIDNUMBER'
+        register:
+          type: number
+          nullable: true
+          description: 'DB: REGISTER'
+        readingResult:
+          type: number
+          nullable: true
+          description: 'DB: READINGRESULT'
+        meterReadingNote:
+          type: number
+          nullable: true
+          description: 'DB: METERREADINGNOTE; physical type must be verified.'
+        observationCode:
+          type: number
+          nullable: true
+          description: 'DB: OBSERVATIONCODE; physical type must be verified.'
+        pmId:
+          type: number
+          nullable: true
+          description: 'DB: PM_ID'
+        serge:
+          type: string
+          nullable: true
+        zzimp:
+          type: number
+          nullable: true
+        exportDate:
+          type: string
+          format: date-time
+          nullable: true
+        codeContract:
+          type: string
+          nullable: true
+        gpsLongitude:
+          type: string
+          nullable: true
+        gpsLatitude:
+          type: string
+          nullable: true
+        zzterwork:
+          type: string
+          nullable: true
+        mrDateForBilling:
+          type: string
+          nullable: true
+          description: 'DB: MRDATEFORBILLING; source inserts as quoted text.'
+        mrTimeForBilling:
+          type: string
+          nullable: true
+          description: 'DB: MRTIMEFORBILLING; source inserts as quoted text.'
+        valuePart1:
+          type: number
+          nullable: true
+        ableinh:
+          type: number
+          nullable: true
+          description: Physical datatype must be verified; source SQL inserts this without quotes.
+        lidhurMatesCode:
+          type: number
+          nullable: true
+        tipiMatesitLidhurCode:
+          type: number
+          nullable: true
+        vendInstalimiBoxiPCode:
+          type: number
+          nullable: true
+        lidhurMeEnergjiCode:
+          type: number
+          nullable: true
+        vendInstalimiBoxKolCode:
+          type: number
+          nullable: true
+        vendInstalimiBoxIndCode:
+          type: number
+          nullable: true
+        cilesiBoxiCode:
+          type: number
+          nullable: true
+        llojMatesiCode:
+          type: number
+          nullable: true
+        nrSerialMatesiCode:
+          type: number
+          nullable: true
+        cilesiXhamBoxiCode:
+          type: number
+          nullable: true
+        indexAktiv:
+          type: number
+          nullable: true
+        indexAmbPerbashket:
+          type: number
+          nullable: true
+        indexReaktiv:
+          type: number
+          nullable: true
+        indexPik:
+          type: number
+          nullable: true
+        leximProb:
+          type: number
+          nullable: true
+        indexSprod:
+          type: number
+          nullable: true
+        indexSprodReaktiv:
+          type: number
+          nullable: true
+        incorrectCharging:
+          type: number
+          nullable: true
+      example: &id003
+        mridnumber: 100001
+        register: 1
+        readingResult: 250.75
+        meterReadingNote: null
+        observationCode: null
+        pmId: 50001
+        serge: MTR-001
+        zzimp: 0
+        exportDate: '2026-09-25T10:00:00+02:00'
+        codeContract: C-10001
+        gpsLongitude: '19.000000'
+        gpsLatitude: '41.000000'
+        zzterwork: WORK
+        mrDateForBilling: '20260925'
+        mrTimeForBilling: '100000'
+        valuePart1: 250.75
+        ableinh: 100200
+        lidhurMatesCode: 1
+        tipiMatesitLidhurCode: 1
+        vendInstalimiBoxiPCode: 1
+        lidhurMeEnergjiCode: 1
+        vendInstalimiBoxKolCode: 1
+        vendInstalimiBoxIndCode: 1
+        cilesiBoxiCode: 1
+        llojMatesiCode: 1
+        nrSerialMatesiCode: 1
+        cilesiXhamBoxiCode: 1
+        indexAktiv: 250.75
+        indexAmbPerbashket: 0
+        indexReaktiv: 20.5
+        indexPik: 0
+        leximProb: 0
+        indexSprod: 0
+        indexSprodReaktiv: 0
+        incorrectCharging: 0
+    ReadingSubmissionBatch:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/ReadingSubmission'
+      example:
+        items:
+        - *id003
+    InsertBatchResponse:
+      type: object
+      required:
+      - requestedCount
+      - insertedCount
+      properties:
+        requestedCount:
+          type: integer
+          minimum: 0
+        insertedCount:
+          type: integer
+          minimum: 0
+      example:
+        requestedCount: 1
+        insertedCount: 1
+    Zone:
+      type: object
+      properties:
+        zone:
+          type: string
+          nullable: true
+          description: 'DB projection: ZONA'
+        description:
+          type: string
+          nullable: true
+          description: 'DB projection: PERSHKRIMI || '' Zone'''
+        zoneChild:
+          type: integer
+          nullable: true
+          description: 'DB projection: ZONE_CHILD; query 23 emits constant 0.'
+      example:
+        zone: ZONE-1
+        description: ZONE-1 Zone
+        zoneChild: 0
+    SubZone:
+      type: object
+      properties:
+        zone:
+          type: string
+          nullable: true
+        zoneChild:
+          type: string
+          nullable: true
+          description: 'DB: MYAVIS'
+        description:
+          type: string
+          nullable: true
+          description: 'DB: NAME_ZONE'
+      example:
+        zone: ZONE-1
+        zoneChild: SUB-1
+        description: Example Sub-zone
+    AnomalyRequest:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: string
+          description: 'DB: OSSH.MYAVIS_ANOMAL.ID'
+        name:
+          type: string
+          description: 'DB: OSSH.MYAVIS_ANOMAL.AL'
+      example:
+        id: A01
+        name: Example anomaly
+    SubAnomalyRequest:
+      type: object
+      required:
+      - anomalyCode
+      - anomaly
+      - subAnomalyCode
+      - subAnomaly
+      properties:
+        anomalyCode:
+          type: string
+          description: 'DB: KOD_ANOMALI'
+        anomaly:
+          type: string
+          description: 'DB: ANOMALI'
+        subAnomalyCode:
+          type: string
+          description: 'DB: KOD_SUBANOMALI'
+        subAnomaly:
+          type: string
+          description: 'DB: SUBANOMALI'
+      example:
+        anomalyCode: A01
+        anomaly: Example anomaly
+        subAnomalyCode: SA01
+        subAnomaly: Example sub-anomaly
+    Feeder:
+      type: object
+      properties:
+        lovcabinId:
+          type: integer
+          format: int64
+        cabinBillingId:
+          type: integer
+          format: int64
+          description: 'DB projection: NUMBERING_LINE AS ID_CABIN_BILLING'
+        zone:
+          type: string
+          nullable: true
+        subZone:
+          type: string
+          nullable: true
+        parent:
+          type: string
+          nullable: true
+        parentSerial:
+          type: string
+          nullable: true
+        nodeSubstationId:
+          type: string
+          nullable: true
+        instanceId:
+          type: string
+          nullable: true
+        nodeName:
+          type: string
+          nullable: true
+        serialNumber:
+          type: string
+          nullable: true
+        nodeCode:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: number
+          nullable: true
+        meterCoefficient:
+          type: number
+          nullable: true
+        parentId:
+          type: integer
+          format: int64
+        active:
+          type: integer
+          enum:
+          - 1
+          description: Query emits constant 1.
+      example:
+        lovcabinId: 0
+        cabinBillingId: 1001
+        zone: ZONE-1
+        subZone: ''
+        parent: ''
+        parentSerial: ''
+        nodeSubstationId: SUBST-1
+        instanceId: INST-1
+        nodeName: Feeder 1
+        serialNumber: SN-1
+        nodeCode: ''
+        description: ''
+        status: 1
+        meterCoefficient: 1
+        parentId: 0
+        active: 1
+    Cabin:
+      type: object
+      properties:
+        lovcabinId:
+          type: integer
+          format: int64
+          description: 0 for types 1-3; actual LOVCABIN_ID for special/type 4.
+        cabinBillingId:
+          type: integer
+          format: int64
+          description: 'DB: NUMBERING_CABIN'
+        zone:
+          type: string
+          nullable: true
+        subZone:
+          type: string
+          nullable: true
+        parent:
+          type: string
+          nullable: true
+        parentSerial:
+          type: string
+          nullable: true
+        parentId:
+          type: integer
+          format: int64
+        nodeLineId:
+          type: integer
+          format: int64
+          nullable: true
+        instanceId:
+          type: string
+          nullable: true
+        nodeName:
+          type: string
+          nullable: true
+        serialNumber:
+          type: string
+          nullable: true
+        nodeCode:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        active:
+          type: number
+          nullable: true
+        meterCoefficient:
+          type: number
+          nullable: true
+      example:
+        lovcabinId: 0
+        cabinBillingId: 2001
+        zone: ZONE-1
+        subZone: SUB-1
+        parent: Feeder 1
+        parentSerial: SN-1
+        parentId: 1001
+        nodeLineId: 1001
+        instanceId: INST-1
+        nodeName: Cabin 1
+        serialNumber: CAB-SN-1
+        nodeCode: CAB-001
+        description: ''
+        active: 1
+        meterCoefficient: 1
+    NodeSyncRequest:
+      type: object
+      required:
+      - type
+      - ids
+      properties:
+        type:
+          $ref: '#/components/schemas/SourceType'
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+      example:
+        type: converge
+        ids:
+        - 1001
+        - 1002
+    SpecialCabinSyncRequest:
+      type: object
+      required:
+      - lovcabinIds
+      properties:
+        lovcabinIds:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+      example:
+        lovcabinIds:
+        - 9988
+        - 9989
+    ErrorResponse:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+        correlationId:
+          type: string
+          nullable: true
+      example:
+        code: INVALID_REQUEST
+        message: The supplied request is not valid.
+        correlationId: example-correlation-id
+  responses:
+    BadRequest:
+      description: Invalid request or unsupported logical mapping.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Target row was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServerError:
+      description: Database or internal integration failure.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

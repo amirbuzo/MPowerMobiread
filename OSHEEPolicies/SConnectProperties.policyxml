@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policies>
+  <policy policyType="UserDefined" policyName="SConnectProperties" policyTemplate="UserDefined">
+    <schema_name>etl</schema_name>
+    <office_ids>13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32</office_ids>
+    <batch_size>5000</batch_size>
+  </policy>
+</policies>
