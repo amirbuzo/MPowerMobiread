@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.ibm.broker.javacompute.MbJavaComputeNode;
 import com.ibm.broker.plugin.MbElement;
@@ -12,6 +13,8 @@ import com.ibm.broker.plugin.MbException;
 import com.ibm.broker.plugin.MbJSON;
 import com.ibm.broker.plugin.MbMessage;
 import com.ibm.broker.plugin.MbMessageAssembly;
+import com.ibm.broker.plugin.MbPolicy;
+import com.oshee.util.ACELogger;
 
 public abstract class MobiReadJdbcOperation extends MbJavaComputeNode {
 	private static final String[] TYPES = { "fatura", "converge", "feed-hec-nenst", "special" };
@@ -38,6 +41,7 @@ public abstract class MobiReadJdbcOperation extends MbJavaComputeNode {
 	public void evaluate(MbMessageAssembly input) throws MbException {
 		MbMessage response = new MbMessage(input.getMessage());
 		try {
+			String correlationId = resolveCorrelationId(input);
 			String sql = sqlTemplate;
 			int limit = 14000;
 			long offset = 0;
@@ -70,11 +74,13 @@ public abstract class MobiReadJdbcOperation extends MbJavaComputeNode {
 				}
 			} catch (IllegalArgumentException invalid) {
 				error(response, 400, "INVALID_REQUEST", invalid.getMessage());
-				propagate(input, response);
+				propagate(input, response, correlationId);
 				return;
 			}
 			try {
+				sql = applySchemaPolicy(sql);
 				Connection connection = getJDBCType4Connection(policy, JDBC_TransactionType.MB_TRANSACTION_AUTO);
+				ACELogger.info(correlationId, operation, "Executing SQL: " + renderSqlForLog(sql, bindings));
 				try (PreparedStatement statement = connection.prepareStatement(sql)) {
 					for (int i = 0; i < bindings.size(); i++)
 						statement.setLong(i + 1, bindings.get(i));
@@ -120,15 +126,57 @@ public abstract class MobiReadJdbcOperation extends MbJavaComputeNode {
 					}
 				}
 			} catch (SQLException | MbException failure) {
-				logFailure(failure);
+				logFailure(correlationId, failure);
 				error(response, 500, "DATABASE_ERROR", "Unable to execute the database operation.");
 			}
-			propagate(input, response);
+			propagate(input, response, correlationId);
 		} finally {
 			response.clearMessage();
 		}
 	}
 
+	private String applySchemaPolicy(String sql) throws MbException, SQLException {
+        if (!sql.contains("${schemaName}")) {
+            return sql;
+        }
+        MbPolicy schemaPolicy = MbPolicy.getPolicy("JDBCProviders", policy);
+        if (schemaPolicy == null) {
+            throw new SQLException("JDBC policy is not deployed: " + policy);
+        }
+        String schemaName = schemaPolicy.getPropertyValueAsString("databaseSchemaNames");
+        if (schemaName == null || schemaName.trim().isEmpty()) {
+            throw new SQLException("JDBC policy databaseSchemaNames is missing: " + policy);
+        }
+        schemaName = schemaName.trim();
+        if (!schemaName.matches("[A-Za-z][A-Za-z0-9_$#]{0,127}")) {
+            throw new SQLException("JDBC policy databaseSchemaNames must contain one valid unquoted schema name: " + policy);
+        }
+        return sql.replace("${schemaName}", schemaName);
+    }
+
+	private static String resolveCorrelationId(MbMessageAssembly input) throws MbException {
+        MbElement headers = input.getMessage().getRootElement().getFirstElementByPath("HTTPInputHeader");
+        if (headers == null) {
+            headers = input.getMessage().getRootElement().getFirstElementByPath("HTTPRequestHeader");
+        }
+        if (headers != null) {
+            for (MbElement header = headers.getFirstChild(); header != null; header = header.getNextSibling()) {
+                if ("X-Correlation-Id".equalsIgnoreCase(header.getName()) && header.getValue() != null) {
+                    String value = header.getValueAsString().replace('\r', ' ').replace('\n', ' ').trim();
+                    return value.isEmpty() ? UUID.randomUUID().toString() : value;
+                }
+            }
+        }
+        return UUID.randomUUID().toString();
+    }
+
+	private static String renderSqlForLog(String sql, List<Long> bindings) {
+		for (Long value : bindings) {
+			sql = sql.replaceFirst("\\?", value == null ? "NULL" : value.toString());
+		}
+		return sql;
+	}
+	
 	private boolean hasParameter(String name) {
 		for (String value : parameters)
 			if (name.equals(value))
@@ -204,15 +252,17 @@ public abstract class MobiReadJdbcOperation extends MbJavaComputeNode {
 		field(data, "message", message);
 	}
 
-	private void logFailure(Exception failure) {
+	private void logFailure(String correlationId, Exception failure) {
 		String detail = failure instanceof SQLException
 				? "SQLState=" + ((SQLException) failure).getSQLState() + ", errorCode="
 						+ ((SQLException) failure).getErrorCode()
 				: failure.getClass().getSimpleName();
-		System.err.println(operation + ": database operation failed (" + detail + ")");
+		ACELogger.error(correlationId, operation, "Database operation failed (" + detail + ")");
 	}
 
-	private void propagate(MbMessageAssembly input, MbMessage response) throws MbException {
-		getOutputTerminal("out").propagate(new MbMessageAssembly(input, response));
-	}
+	private void propagate(MbMessageAssembly input, MbMessage response, String correlationId) throws MbException {
+        MbElement headers = response.getRootElement().getFirstElementByPath("HTTPReplyHeader");
+        field(headers, "X-Correlation-ID", correlationId);
+        getOutputTerminal("out").propagate(new MbMessageAssembly(input, response));
+    }
 }

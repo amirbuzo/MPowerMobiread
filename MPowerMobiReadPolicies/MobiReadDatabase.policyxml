@@ -14,13 +14,13 @@
     <connectionUrlFormatAttr5></connectionUrlFormatAttr5>
     <serverName>localhost</serverName>
     <portNumber>1521</portNumber>
-    <jarsURL>C:\Oracle_Driver\jdbc\lib</jarsURL>
-    <databaseSchemaNames>useProvidedSchemaNames</databaseSchemaNames>
+    <jarsURL>{SharedClassesDirectory}</jarsURL>
+    <databaseSchemaNames>MR</databaseSchemaNames>
     <description>Local MobiRead Oracle connection to FREEPDB1; credentials are supplied by ACE security identity.</description>
     <maxConnectionPoolSize>0</maxConnectionPoolSize>
     <securityIdentity>mobireadSecurityIdentity</securityIdentity>
     <environmentParms></environmentParms>
     <jdbcProviderXASupport>false</jdbcProviderXASupport>
-    <useDeployedJars>false</useDeployedJars>
+    <useDeployedJars>true</useDeployedJars>
   </policy>
 </policies>

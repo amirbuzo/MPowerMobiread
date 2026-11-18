@@ -21,10 +21,10 @@ public class GetSpecialCustomers_JavaCompute extends MobiReadJdbcOperation {
             + "ZZGPS_LATITUDE,    "
             + "ZZGPS_LONGITUDE,    "
             + "KATEGORIA,    "
-            + "NENKATEGORIA FROM MR.MODOWNHEADER_FIDERI16_NEW H "
+            + "NENKATEGORIA FROM ${schemaName}.MODOWNHEADER_FIDERI16_NEW H "
             + "WHERE zzimp = 0 ORDER BY MODOWNHEADER_ID "
             + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
-            "{OSHEEPolicies}:MobiReadDatabase", "page",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "page",
             new String[] {"offset", "limit"},
             new String[][] {
         	{"CUSTOMER_FULL_NAME", "customerFullName", "string"}, 

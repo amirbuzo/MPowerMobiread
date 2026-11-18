@@ -3,9 +3,9 @@ public class GetTotalConvergeItemReadings_JavaCompute extends MobiReadJdbcOperat
     public GetTotalConvergeItemReadings_JavaCompute() {
         super("getTotalConvergeItemReadings",
             "SELECT COUNT(MODOWNHEADER_ID) as TOTAL "
-            + "FROM MR.MODOWNHEADER_CONVERGE_NEW "
+            + "FROM ${schemaName}.MODOWNHEADER_CONVERGE_NEW "
             + "WHERE zzimp = 1 AND ZZIMP1 = 0",
-            "{OSHEEPolicies}:MobiReadDatabase", "total",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "total",
             new String[] {},
             new String[][] {{"TOTAL", "total", "integer"}});
     }

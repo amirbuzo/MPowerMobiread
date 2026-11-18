@@ -23,11 +23,11 @@ public class GetFeedHecNenstItemReadings_JavaCompute extends MobiReadJdbcOperati
             + "NVL(INDEX_PIK_PREV, 0) INDEX_PIK_PREV,    "
             + "MODOWNHEADER_ID ID_ITEMDATAENTRY_BILLING,    "
             + "NVL(INCORRECT_CHARGING, 0) INCORRECT_CHARGING "
-            + "FROM MR.MODOWNHEADER_F_H_N_NEW "
+            + "FROM ${schemaName}.MODOWNHEADER_F_H_N_NEW "
             + "WHERE zzimp = 1 AND ZZIMP1 = 0 "
             + "ORDER BY code_contract "
             + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
-            "{OSHEEPolicies}:MobiReadDatabase", "page",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "page",
             new String[] {"offset", "limit"},
             new String[][] {
         	{"CODE_CONTRACT", "contractCode", "string"}, 

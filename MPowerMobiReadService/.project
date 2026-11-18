@@ -3,7 +3,9 @@
 	<name>MPowerMobiReadService</name>
 	<comment></comment>
 	<projects>
-        <project>MPowerMobiReadServiceJava</project>
+		<project>MPowerMobiReadServiceJava</project>
+		<project>ExternalDriversLibrary</project>
+		<project>OSHEEUtils</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

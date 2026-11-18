@@ -22,11 +22,11 @@ public class GetConvergeCustomers_JavaCompute extends MobiReadJdbcOperation {
             + "ZZGPS_LONGITUDE, "
             + "KATEGORIA, "
             + "NENKATEGORIA "
-            + "FROM MR.MODOWNHEADER_CONVERGE_NEW H "
+            + "FROM ${schemaName}.MODOWNHEADER_CONVERGE_NEW H "
             + "WHERE zzimp = 0 "
             + "ORDER BY MODOWNHEADER_ID "
             + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY ",
-            "{OSHEEPolicies}:MobiReadDatabase", "page",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "page",
             new String[] {"offset", "limit"},
             new String[][] {
         	{"CUSTOMER_FULL_NAME", "customerFullName", "string"}, 

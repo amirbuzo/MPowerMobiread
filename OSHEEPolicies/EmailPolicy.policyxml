@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <policies>
   <policy policyType="UserDefined" policyName="EmailPolicy" policyTemplate="UserDefined">
-    <EmailTo>ivan.pantelic@ibis-solutions.rs</EmailTo>
+    <EmailTo>dorjan.zenjelaj@oshee.al</EmailTo>
     <EmailFrom>no-reply@oshee.al</EmailFrom>
     <SubjectOfEmail>OSHEE MPOWER-SCONNECT Integration Notification</SubjectOfEmail>
   </policy>

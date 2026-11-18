@@ -4,9 +4,9 @@ public class GetTotalSpecialCustomers_JavaCompute extends MobiReadJdbcOperation 
         super("getTotalSpecialCustomers",
             "SELECT "
             + "count(h.MODOWNHEADER_ID) AS TOTAL "
-            + "FROM MR.MODOWNHEADER_F_H_N_NEW H "
+            + "FROM ${schemaName}.MODOWNHEADER_F_H_N_NEW H "
             + "WHERE h.zzimp = 0",
-            "{OSHEEPolicies}:MobiReadDatabase", "total",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "total",
             new String[] {},
             new String[][] {{"TOTAL", "total", "integer"}});
     }

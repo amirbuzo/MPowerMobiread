@@ -2,8 +2,8 @@
 public class TruncateSubAnomalies_JavaCompute extends MobiReadJdbcOperation {
     public TruncateSubAnomalies_JavaCompute() {
         super("truncateSubAnomalies",
-            "TRUNCATE TABLE OSSH.LISTE_ANOMALI_SUBANOMALI",
-            "{OSHEEPolicies}:MobiReadOSSHDatabase", "truncate",
+            "TRUNCATE TABLE ${schemaName}.LISTE_ANOMALI_SUBANOMALI",
+            "{MPowerMobiReadPolicies}:MobiReadOSSHDatabase", "truncate",
             new String[] {},
             new String[][] {});
     }

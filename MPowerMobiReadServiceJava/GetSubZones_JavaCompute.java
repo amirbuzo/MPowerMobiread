@@ -9,10 +9,10 @@ public class GetSubZones_JavaCompute extends MobiReadJdbcOperation {
             + "mz.MYAVIS ZONE_CHILD, "
             + "z.TOWN ZONA, "
             + "mz.NAME_ZONE PERSHKRIMI "
-            + "FROM MYAVIS_ZONA mz "
-            + "LEFT OUTER JOIN LOVZONA z ON mz.BILLING = (z.MYAVIS_DB_ID || z.NENZONA || ' ')) "
+            + "FROM ${schemaName}.MYAVIS_ZONA mz "
+            + "LEFT OUTER JOIN ${schemaName}.LOVZONA z ON mz.BILLING = (z.MYAVIS_DB_ID || z.NENZONA || ' ')) "
             + "GROUP BY ZONA, ZONE_CHILD, PERSHKRIMI\nORDER BY ZONA, ZONE_CHILD, PERSHKRIMI",
-            "{OSHEEPolicies}:MobiReadDatabase", "array",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "array",
             new String[] {},
             new String[][] {
         	{"ZONA", "zone", "string"}, 

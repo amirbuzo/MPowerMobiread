@@ -18,12 +18,12 @@ public class GetFeedHecNenstCabins_JavaCompute extends MobiReadJdbcOperation {
             + "'' as description, "
             + "c.validity as active, "
             + "c.coefficient as koeficienti_matesit "
-            + "FROM MR.LOVCABIN_FATURA c "
-            + "INNER JOIN MR.LOVINSTANCES i ON c.INSTCODE = i.INSTCODE "
-            + "INNER JOIN MR.LOVLINE_FATURA l ON c.REF_LINE = l.NUMBERING_LINE "
-            + "INNER JOIN MR.MYAVIS_ZONA mv ON mv.BILLING = (i.MYAVIS_DB_ID || c.REF_ZONE || ' ') "
+            + "FROM ${schemaName}.LOVCABIN_FATURA c "
+            + "INNER JOIN ${schemaName}.LOVINSTANCES i ON c.INSTCODE = i.INSTCODE "
+            + "INNER JOIN ${schemaName}.LOVLINE_FATURA l ON c.REF_LINE = l.NUMBERING_LINE "
+            + "INNER JOIN ${schemaName}.MYAVIS_ZONA mv ON mv.BILLING = (i.MYAVIS_DB_ID || c.REF_ZONE || ' ') "
             + "WHERE c.validity = 1 AND c.type = 3 AND l.type = 3 AND l.validity = 1 AND c.zzimp = 0 AND l.zzimp = 0",
-            "{OSHEEPolicies}:MobiReadDatabase", "array",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "array",
             new String[] {},
             new String[][] {
         	{"LOVCABIN_ID", "lovcabinId", "integer"}, 

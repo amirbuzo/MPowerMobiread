@@ -19,10 +19,10 @@ public class GetFeedHecNenstFeeders_JavaCompute extends MobiReadJdbcOperation {
             + "l.coefficient as koeficienti_matesit,    "
             + "0 as parent_id,    "
             + "1 as active "
-            + "FROM MR.LOVLINE_FATURA l "
-            + "INNER JOIN MR.LOVINSTANCES i ON l.INSTCODE = i.INSTCODE "
+            + "FROM ${schemaName}.LOVLINE_FATURA l "
+            + "INNER JOIN ${schemaName}.LOVINSTANCES i ON l.INSTCODE = i.INSTCODE "
             + "WHERE l.zzimp = 0 AND l.validity = 1 AND l.type = 3",
-            "{OSHEEPolicies}:MobiReadDatabase", "array",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "array",
             new String[] {},
             new String[][] {
         	{"LOVCABIN_ID", "lovcabinId", "integer"}, 

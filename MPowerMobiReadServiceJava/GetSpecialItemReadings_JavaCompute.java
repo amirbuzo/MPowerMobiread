@@ -24,11 +24,11 @@ public class GetSpecialItemReadings_JavaCompute extends MobiReadJdbcOperation {
             + "NVL(INDEX_PIK_PREV, 0) INDEX_PIK_PREV, "
             + "MODOWNHEADER_ID ID_ITEMDATAENTRY_BILLING, "
             + "NVL(INCORRECT_CHARGING, 0) INCORRECT_CHARGING "
-            + "FROM MR.MODOWNHEADER_FIDERI16_NEW "
+            + "FROM ${schemaName}.MODOWNHEADER_FIDERI16_NEW "
             + "WHERE zzimp = 1 AND ZZIMP1 = 0 "
             + "ORDER BY MODOWNHEADER_ID "
             + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
-            "{OSHEEPolicies}:MobiReadDatabase", "page",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "page",
             new String[] {"offset", "limit"},
             new String[][] {
         	{"CODE_CONTRACT", "contractCode", "string"}, 

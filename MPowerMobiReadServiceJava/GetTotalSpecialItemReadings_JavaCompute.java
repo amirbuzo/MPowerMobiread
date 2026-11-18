@@ -3,9 +3,9 @@ public class GetTotalSpecialItemReadings_JavaCompute extends MobiReadJdbcOperati
     public GetTotalSpecialItemReadings_JavaCompute() {
         super("getTotalSpecialItemReadings",
             "SELECT COUNT(MODOWNHEADER_ID) as TOTAL "
-            + "FROM MR.MODOWNHEADER_FIDERI16_NEW "
+            + "FROM ${schemaName}.MODOWNHEADER_FIDERI16_NEW "
             + "WHERE zzimp = 1 AND ZZIMP1 = 0",
-            "{OSHEEPolicies}:MobiReadDatabase", "total",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "total",
             new String[] {},
             new String[][] {{"TOTAL", "total", "integer"}});
     }

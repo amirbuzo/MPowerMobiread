@@ -28,11 +28,11 @@ public class GetItemReadings_JavaCompute extends MobiReadJdbcOperation {
             + "NVL(INDEX_SPROD_UPPER, 0) INDEX_SPROD_UPPER,    "
             + "NVL(INDEX_SPROD_LOWER, 0) INDEX_SPROD_LOWER,    "
             + "NVL(INCORRECT_CHARGING, 0) INCORRECT_CHARGING "
-            + "FROM MR.MODOWNHEADER_FATURA_NEW "
+            + "FROM ${schemaName}.MODOWNHEADER_FATURA_NEW "
             + "WHERE zzimp = 1 AND ZZIMP1 = 0 "
             + "ORDER BY CODE_CONTRACT, TIPI_LEXIMIT "
             + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
-            "{OSHEEPolicies}:MobiReadDatabase", "page",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "page",
             new String[] {"offset", "limit"},
             new String[][] {
         	{"CODE_CONTRACT", "contractCode", "string"}, 

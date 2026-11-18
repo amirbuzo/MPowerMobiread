@@ -11,11 +11,11 @@ public class GetZones_JavaCompute extends MobiReadJdbcOperation {
             + "z.TOWN pershkrimi, "
             + "z.SPORTELI, "
             + "0 ZONE_CHILD "
-            + "FROM MYAVIS_ZONA mz "
-            + "LEFT OUTER JOIN LOVZONA z ON mz.BILLING = (z.MYAVIS_DB_ID || z.NENZONA || ' ')) "
+            + "FROM ${schemaName}.MYAVIS_ZONA mz "
+            + "LEFT OUTER JOIN ${schemaName}.LOVZONA z ON mz.BILLING = (z.MYAVIS_DB_ID || z.NENZONA || ' ')) "
             + "GROUP BY zona, pershkrimi, ZONE_CHILD "
             + "ORDER BY zona, pershkrimi, ZONE_CHILD",
-            "{OSHEEPolicies}:MobiReadDatabase", "array",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "array",
             new String[] {},
             new String[][] {
         	{"ZONA", "zone", "string"}, 

@@ -22,11 +22,11 @@ public class GetFeedHecNenstCustomers_JavaCompute extends MobiReadJdbcOperation 
             + "ZZGPS_LONGITUDE,    "
             + "KATEGORIA,    "
             + "NENKATEGORIA "
-            + "FROM MR.MODOWNHEADER_F_H_N_NEW H "
+            + "FROM ${schemaName}.MODOWNHEADER_F_H_N_NEW H "
             + "WHERE zzimp = 0 "
             + "ORDER BY code_contract "
             + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
-            "{OSHEEPolicies}:MobiReadDatabase", "page",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "page",
             new String[] {"offset", "limit"},
             new String[][] {
         	{"CUSTOMER_FULL_NAME", "customerFullName", "string"}, 

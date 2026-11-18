@@ -3,11 +3,11 @@ public class GetMinIDFeedHecNenstItemReadings_JavaCompute extends MobiReadJdbcOp
     public GetMinIDFeedHecNenstItemReadings_JavaCompute() {
         super("getMinIDFeedHecNenstItemReadings",
             "SELECT MODOWNITEM_ID "
-            + "FROM MODOWNITEM_F_H_N_FATURA "	
+            + "FROM ${schemaName}.MODOWNITEM_F_H_N_FATURA "	
             + "WHERE ZZIMP = 0 "
             + "ORDER BY modownitem_id "
             + "FETCH FIRST 1 ROW ONLY",
-            "{OSHEEPolicies}:MobiReadDatabase", "min",
+            "{MPowerMobiReadPolicies}:MobiReadDatabase", "min",
             new String[] {},
             new String[][] {{"MODOWNITEM_ID", "minItemId", "integer"}});
     }
